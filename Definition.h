@@ -50,29 +50,29 @@ Output(param->numMnistTrainImages, std::vector<double>(param->nOutput));
 
 /* Weights from input to hidden layer */
 std::vector< std::vector<double> >
-weight1(param->nHide, std::vector<double>(param->nInput));
+weight1(param->nHide, std::vector<double>(param->nInput) + 1);
 /* Weights from hidden layer to output layer */
 std::vector< std::vector<double> >
-weight2(param->nOutput, std::vector<double>(param->nHide));
+weight2(param->nOutput, std::vector<double>(param->nHide) + 1);
 
 /* Weight change of weight1 */
 std::vector< std::vector<double> >
-deltaWeight1(param->nHide, std::vector<double>(param->nInput));
+deltaWeight1(param->nHide, std::vector<double>(param->nInput) + 1);
 
 /* Weight change of weight2 */
 std::vector< std::vector<double> >
-deltaWeight2(param->nOutput, std::vector<double>(param->nHide));
+deltaWeight2(param->nOutput, std::vector<double>(param->nHide) + 1);
 
 /*the variables to track the ΔW*/
 std::vector< std::vector<double> >
-totalDeltaWeight1(param->nHide, std::vector<double>(param->nInput));
+totalDeltaWeight1(param->nHide, std::vector<double>(param->nInput) + 1);
 std::vector< std::vector<double> >
-totalDeltaWeight1_abs(param->nHide, std::vector<double>(param->nInput));
+totalDeltaWeight1_abs(param->nHide, std::vector<double>(param->nInput) + 1);
 /*the variables to track the ΔW*/
 std::vector< std::vector<double> >
-totalDeltaWeight2(param->nOutput, std::vector<double>(param->nHide));
+totalDeltaWeight2(param->nOutput, std::vector<double>(param->nHide) + 1);
 std::vector< std::vector<double> >
-totalDeltaWeight2_abs(param->nOutput, std::vector<double>(param->nHide));
+totalDeltaWeight2_abs(param->nOutput, std::vector<double>(param->nHide) + 1);
 
 /* Inputs of testing set */
 std::vector< std::vector<double> >
@@ -107,9 +107,9 @@ momentumPrev2(param->nOutput, std::vector<double>(param->nHide));
 int correct = 0;
 
 /* Synaptic array between input and hidden layer */
-Array *arrayIH = new Array(param->nHide, param->nInput, param->arrayWireWidth);
+Array *arrayIH = new Array(param->nHide, param->nInput + 1, param->arrayWireWidth);
 /* Synaptic array between hidden and output layer */
-Array *arrayHO = new Array(param->nOutput, param->nHide, param->arrayWireWidth);
+Array *arrayHO = new Array(param->nOutput, param->nHide + 1, param->arrayWireWidth);
 
 /* Random number generator engine */
 std::mt19937 gen;

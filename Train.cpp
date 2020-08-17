@@ -155,7 +155,7 @@ double s2[param->nOutput];  // Output delta from hidden layer to the output laye
                             //printf("calculating the current sum\n");
 							double Isum = 0;    // weighted sum current
 							double IsumMax = 0; // Max weighted sum current
-              double IsumMin = 0; 
+              				double IsumMin = 0; 
 							double inputSum = 0;    // Weighted sum current of input vector * weight=1 column
 							for (int k=0; k<param->nInput; k++) {
 								if ((dInput[i][k]>>n) & 1) {    // if the nth bit of dInput[i][k] is 1
@@ -164,8 +164,19 @@ double s2[param->nOutput];  // Output delta from hidden layer to the output laye
 									sumArrayReadEnergy += arrayIH->wireCapRow * readVoltage * readVoltage; // Selected BLs (1T1R) or Selected WLs (cross-point)
 								}
 								IsumMax += arrayIH->GetMaxCellReadCurrent(j,k);
-                IsumMin += arrayIH->GetMinCellReadCurrent(j,k);
+                				IsumMin += arrayIH->GetMinCellReadCurrent(j,k);
 							}
+
+							//add bias
+							if (n == 0)
+							{
+								Isum += arrayIH->ReadCell(j, param->nInput);
+								inputSum += arrayIH->GetMediumCellReadCurrent(j, param->nInput);
+								sumArrayReadEnergy += arrayIH->wireCapRow * readVoltage * readVoltage;
+							}
+							IsumMax += arrayIH->GetMaxCellReadCurrent(j, param->nInput);
+	                		IsumMin += arrayIH->GetMinCellReadCurrent(j, param->nInput);
+
 							sumArrayReadEnergy += Isum * readVoltage * readPulseWidth;
 							int outputDigits = 2*(CurrentToDigits(Isum, IsumMax-IsumMin)-CurrentToDigits(inputSum, IsumMax-IsumMin));   
                             outN1[j] += DigitsToAlgorithm(outputDigits, pSumMaxAlgorithm);
@@ -301,7 +312,7 @@ double s2[param->nOutput];  // Output delta from hidden layer to the output laye
 						if (AnalogNVM *temp = dynamic_cast<AnalogNVM*>(arrayHO->cell[0][0])) {  // Analog eNVM
 							double Isum = 0;    // weighted sum current
 							double IsumMax = 0; // Max weighted sum current
-              double IsumMin = 0; 
+              				double IsumMin = 0; 
 							double a1Sum = 0;    // Weighted sum current of input vector * weight=1 column                            
 							for (int k=0; k<param->nHide; k++) {
 								if ((da1[k]>>n) & 1) {    // if the nth bit of da1[k] is 1  
@@ -312,6 +323,18 @@ double s2[param->nOutput];  // Output delta from hidden layer to the output laye
                                 IsumMax += arrayHO->GetMaxCellReadCurrent(j,k);
                                 IsumMin += arrayHO->GetMinCellReadCurrent(j,k);
 							}
+
+							//add bias
+							if (n == 0)
+							{
+								Isum += arrayHO->ReadCell(j, param->nInput);
+								alSum += arrayHO->GetMediumCellReadCurrent(j, param->nInput);
+								sumArrayReadEnergy += arrayHO->wireCapRow * readVoltage * readVoltage;
+							}
+							IsumMax += arrayHO->GetMaxCellReadCurrent(j, param->nInput);
+	                		IsumMin += arrayHO->GetMinCellReadCurrent(j, param->nInput);
+
+
 							sumArrayReadEnergy += Isum * readVoltage * readPulseWidth;
 							int outputDigits = 2*(CurrentToDigits(Isum, IsumMax-IsumMin)-CurrentToDigits(a1Sum, IsumMax-IsumMin)); //minus the reference
 							outN2[j] += DigitsToAlgorithm(outputDigits, pSumMaxAlgorithm);     
@@ -444,7 +467,7 @@ double s2[param->nOutput];  // Output delta from hidden layer to the output laye
                 }
                 numBatchWriteSynapse = (int)ceil((double)arrayIH->arrayColSize / param->numWriteColMuxed);
 				#pragma omp parallel for reduction(+: sumArrayWriteEnergy, sumNeuroSimWriteEnergy, sumWriteLatencyAnalogNVM)
-				for (int k = 0; k < param->nInput; k++) {
+				for (int k = 0; k < param->nInput + 1; k++) {
 					int numWriteOperationPerRow = 0;	// Number of write batches in a row that have any weight change
 					int numWriteCellPerOperation = 0;	// Average number of write cells per batch in a row (for digital eNVM)
 					for (int j = 0; j < param->nHide; j+=numBatchWriteSynapse) {
@@ -465,7 +488,15 @@ double s2[param->nOutput];  // Output delta from hidden layer to the output laye
 						
 							// update weight matrix
                             /*can support multiple optimization algorithm*/
-                            gradt = s1[jj] * Input[i][k];
+                            if (k == param->nInput)
+                            {
+                            	//bias
+                            	gradt = s1[jj];
+                            }
+                            else
+                            {
+                            	gradt = s1[jj] * Input[i][k];
+                            }
                             gradSum1[jj][k] += gradt; // sum over the gradient over all the training samples in this batch
                             if (optimization_type == "SGD"){
                                 deltaWeight1[jj][k] = SGD(gradt, param->alpha1);                        
@@ -746,7 +777,7 @@ double s2[param->nOutput];  // Output delta from hidden layer to the output laye
                 }
 				numBatchWriteSynapse = (int)ceil((double)arrayHO->arrayColSize / param->numWriteColMuxed);
 				#pragma omp parallel for reduction(+: sumArrayWriteEnergy, sumNeuroSimWriteEnergy, sumWriteLatencyAnalogNVM)
-				for (int k = 0; k < param->nHide; k++) {
+				for (int k = 0; k < param->nHide + 1; k++) {
 					int numWriteOperationPerRow = 0;    // Number of write batches in a row that have any weight change
 					int numWriteCellPerOperation = 0;   // Average number of write cells per batch in a row (for digital eNVM)
 					for (int j = 0; j < param->nOutput; j+=numBatchWriteSynapse) {
@@ -765,7 +796,15 @@ double s2[param->nOutput];  // Output delta from hidden layer to the output laye
                         double actualWeightUpdated=0;
                         for (int jj = start; jj <= end; jj++) { // Selected cells
 
-                            gradt = s2[jj] * a1[k];
+                        	if (k == param->nHide)
+                        	{
+                        		//bias
+                        		gradt = s2[jj];
+                        	}
+                        	else
+                        	{
+                        		gradt = s2[jj] * a1[k];
+                        	}
                             gradSum2[jj][k] += gradt; // sum over the gradient over all the training samples in this batch
                          if (optimization_type == "SGD") 
                             deltaWeight2[jj][k] = SGD(gradt, param->alpha2);                        

@@ -140,6 +140,18 @@ void Validate() {
 							IsumMax += arrayIH->GetMaxCellReadCurrent(j,k);
 							IsumMin += arrayIH->GetMinCellReadCurrent(j,k);
 						}
+
+						//add bias
+						if (n == 0)
+						{
+							Isum += arrayIH->ReadCell(j, param->nInput);
+							inputSum += arrayIH->GetMediumCellReadCurrent(j, param->nInput);
+							sumArrayReadEnergyIH += arrayIH->wireCapRow * readVoltageIH * readVoltageIH;
+							IsumMax += arrayIH->GetMaxCellReadCurrent(j, param->nInput);
+							IsumMin += arrayIH->GetMinCellReadCurrent(j, param->nInput);
+						}
+
+
 						sumArrayReadEnergyIH += Isum * readVoltageIH * readPulseWidthIH;
 						int outputDigits = 2*(CurrentToDigits(Isum, IsumMax-IsumMin)-CurrentToDigits(inputSum, IsumMax-IsumMin));
 						outN1[j] += DigitsToAlgorithm(outputDigits, pSumMaxAlgorithm);
@@ -264,7 +276,7 @@ void Validate() {
 					if (AnalogNVM *temp = dynamic_cast<AnalogNVM*>(arrayHO->cell[0][0])) {  // Analog NVM
 						double Isum = 0;    // weighted sum current
 						double IsumMax = 0; // Max weighted sum current
-            double IsumMin = 0;
+            			double IsumMin = 0;
 						double a1Sum = 0;   // Weighted sum current of a1 vector * weight=1 column
 						for (int k=0; k<param->nHide; k++) {
 							if ((da1[k]>>n) & 1) {    // if the nth bit of da1[k] is 1
@@ -273,8 +285,19 @@ void Validate() {
 								sumArrayReadEnergyHO += arrayHO->wireCapRow * readVoltageHO * readVoltageHO;  
 							}
 							IsumMax += arrayHO->GetMaxCellReadCurrent(j,k);
-              IsumMin += arrayHO->GetMinCellReadCurrent(j,k);
+              				IsumMin += arrayHO->GetMinCellReadCurrent(j,k);
 						}
+
+						//add bias
+						if (n == 0)
+						{
+							Isum += arrayHO->ReadCell(j, param->nInput);
+							a1Sum += arrayIH->GetMediumCellReadCurrent(j, param->nInput);
+							sumArrayReadEnergyIH += arrayHO->wireCapRow * readVoltageIH * readVoltageIH;
+							IsumMax += arrayHO->GetMaxCellReadCurrent(j, param->nInput);
+							IsumMin += arrayHO->GetMinCellReadCurrent(j, param->nInput);
+						}
+
 						sumArrayReadEnergyHO += Isum * readVoltageHO * readPulseWidthHO;
 						int outputDigits = 2*(CurrentToDigits(Isum, IsumMax-IsumMin)-CurrentToDigits(a1Sum, IsumMax-IsumMin));
 						outN2[j] += DigitsToAlgorithm(outputDigits, pSumMaxAlgorithm);
